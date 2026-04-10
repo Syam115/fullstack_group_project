@@ -1,0 +1,1 @@
+const mongoose = require('mongoose'); const notifSchema = new mongoose.Schema({ notification_id: String, appointment_id: String, message: String, sent_at: Date, status: String, type: String }); module.exports = mongoose.model('Notification', notifSchema);

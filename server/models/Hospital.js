@@ -1,0 +1,1 @@
+const mongoose = require('mongoose'); const hospitalSchema = new mongoose.Schema({ hospitalName: String, location: String, contactNumber: String }); module.exports = mongoose.model('Hospital', hospitalSchema);

@@ -1,0 +1,1 @@
+exports.addPrescription = (req, res) => {};
