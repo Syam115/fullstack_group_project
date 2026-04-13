@@ -1,21 +1,38 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import DoctorCard from '../components/DoctorCard';
+
+const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+
 export default function DoctorList() {
   const [doctors, setDoctors] = useState([]);
-  
+
   useEffect(() => {
-    axios.get((import.meta.env.VITE_API_BASE_URL||'http://localhost:5000/api')+'/doctors')
-      .then(res => setDoctors(res.data)).catch(console.error);
+    axios.get(`${API_URL}/doctors`).then((res) => setDoctors(res.data)).catch(console.error);
   }, []);
-  
+
   return (
-    <div style={{padding: '3rem 5%'}} className="animate-fade-in">
-      <h2 style={{fontSize: '2.5rem'}}>Our Medical Specialists</h2>
-      <p style={{color: 'var(--text-muted)', marginBottom: '2rem'}}>Select a doctor to view availability and book an appointment.</p>
-      <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(280px, 1fr))', gap:'2rem'}}>
-        {doctors.map(doc => <DoctorCard key={doc._id} doc={doc} />)}
+    <section className="section animate-fade-in">
+      <div className="doctor-list-header">
+        <div>
+          <span className="eyebrow">Medical Advisory Board</span>
+          <h1 className="section-title">Meet our specialists.</h1>
+        </div>
+        <p className="section-copy">
+          Select a doctor to view the profile and book an available slot.
+        </p>
       </div>
-    </div>
+
+      {doctors.length === 0 ? (
+        <div className="empty-state luxury-card">
+          <h3 style={{ marginBottom: '0.75rem' }}>Loading specialists</h3>
+          <p>The clinical network is being prepared for viewing.</p>
+        </div>
+      ) : (
+        <div className="doctor-grid">
+          {doctors.map((doc) => <DoctorCard key={doc._id} doc={doc} />)}
+        </div>
+      )}
+    </section>
   );
 }

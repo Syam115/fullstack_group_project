@@ -1,30 +1,39 @@
-import { Link } from 'react-router-dom';
-import { useSelector, useDispatch } from 'react-redux';
+import { Link, NavLink } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../redux/authSlice';
 
 export default function Navbar() {
   const dispatch = useDispatch();
-  const { userInfo } = useSelector(state => state.auth);
+  const { userInfo } = useSelector((state) => state.auth);
 
   return (
-    <nav className="navbar glass animate-fade-in">
-      <Link to="/" style={{ fontWeight: 700, fontSize: '1.25rem', color: 'white' }}>
-        Medi<span style={{ color: 'var(--primary-color)' }}>Book</span>
-      </Link>
-      <div className="nav-links">
-        <Link to="/doctors" className="nav-link">Find Doctors</Link>
-        {userInfo ? (
-          <>
-            <Link to={`/dashboard/${userInfo.role}`} className="nav-link">Dashboard</Link>
-            <button onClick={() => dispatch(logout())} className="btn btn-secondary">Logout</button>
-          </>
-        ) : (
-          <>
-            <Link to="/login" className="nav-link">Login</Link>
-            <Link to="/register" className="btn btn-primary">Sign Up</Link>
-          </>
-        )}
-      </div>
-    </nav>
+    <header className="site-header">
+      <nav className="navbar animate-fade-in">
+        <Link to="/" className="brand" aria-label="Medilux home">
+          <span className="brand-mark">MediLuxe</span>
+          <span className="brand-copy">Private Care Concierge</span>
+        </Link>
+
+        <div className="nav-links">
+          <NavLink to="/" className="nav-link">Home</NavLink>
+          <NavLink to="/doctors" className="nav-link">Find Doctors</NavLink>
+          {userInfo ? (
+            <>
+              <NavLink to={`/dashboard/${userInfo.role}`} className="nav-link">
+                Dashboard
+              </NavLink>
+              <button onClick={() => dispatch(logout())} className="btn btn-secondary" type="button">
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <NavLink to="/login" className="nav-link">Sign In</NavLink>
+              <Link to="/register" className="btn btn-primary">Get Started</Link>
+            </>
+          )}
+        </div>
+      </nav>
+    </header>
   );
 }

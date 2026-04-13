@@ -1,13 +1,38 @@
 import { Link } from 'react-router-dom';
+
+function getInitials(name = '') {
+  return name
+    .split(' ')
+    .map((part) => part[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+}
+
 export default function DoctorCard({ doc }) {
   return (
-    <div className="glass" style={{padding:'2rem', display:'flex', flexDirection:'column', justifyContent:'space-between'}}>
-      <div>
-        <h3 style={{fontSize: '1.25rem', marginBottom: '0.25rem'}}>{doc.name}</h3>
-        <p style={{color:'var(--primary-color)', fontWeight: '600'}}>{doc.specialization}</p>
-        <p style={{color:'var(--text-muted)', fontSize: '0.9rem', margin: '0.5rem 0'}}>{doc.experience} Years Experience • {doc.hospital}</p>
+    <article className="doctor-card glass">
+      <div className="doctor-card-top">
+        <div className="doctor-monogram">{getInitials(doc.name)}</div>
+        <span className="doctor-tag">{doc.specialization}</span>
       </div>
-      <Link to={`/doctors/${doc._id}`} className="btn btn-secondary" style={{marginTop:'1.5rem', textAlign: 'center'}}>View Profile</Link>
-    </div>
+
+      <div>
+        <h3>{doc.name}</h3>
+        <p>
+          View doctor details, hospital information, and available booking options.
+        </p>
+      </div>
+
+      <div className="doctor-meta">
+        <span>{doc.experience} years of experience</span>
+        <span>{doc.hospital}</span>
+        <span>Consultation from ${doc.fee}</span>
+      </div>
+
+      <Link to={`/doctors/${doc._id}`} className="btn btn-secondary" style={{ width: '100%' }}>
+        View Profile
+      </Link>
+    </article>
   );
 }

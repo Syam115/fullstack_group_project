@@ -1,42 +1,81 @@
 import { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import axios from 'axios';
+
+const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+
 export default function DoctorDetails() {
   const { id } = useParams();
   const [doc, setDoc] = useState(null);
-  
+
   useEffect(() => {
-    axios.get((import.meta.env.VITE_API_BASE_URL||'http://localhost:5000/api')+`/doctors/${id}`)
-      .then(res => setDoc(res.data)).catch(console.error);
+    axios.get(`${API_URL}/doctors/${id}`).then((res) => setDoc(res.data)).catch(console.error);
   }, [id]);
-  
-  if(!doc) return <div style={{padding:'3rem 5%', textAlign:'center'}}>Loading...</div>;
-  
+
+  if (!doc) {
+    return <div className="loading-state luxury-card animate-fade-in">Loading doctor profile...</div>;
+  }
+
   return (
-    <div style={{padding: '3rem 5%', display: 'flex', justifyContent: 'center'}} className="animate-fade-in">
-      <div className="glass" style={{padding:'3rem', width:'100%', maxWidth:'600px'}}>
-        <h2 style={{fontSize: '2rem', marginBottom: '0.25rem'}}>{doc.name}</h2>
-        <h4 style={{color:'var(--primary-color)', fontSize: '1.25rem'}}>{doc.specialization}</h4>
-        
-        <div style={{margin: '2rem 0', padding: '1.5rem', background: 'rgba(255,255,255,0.05)', borderRadius: '8px'}}>
-          <p><strong>Hospital:</strong> {doc.hospital}</p>
-          <p><strong>Experience:</strong> {doc.experience} Years</p>
-          <p><strong>Consultation Fee:</strong> ${doc.fee}</p>
+    <section className="detail-layout animate-fade-in">
+      <aside className="detail-sidebar glass">
+        <span className="eyebrow">Clinical Snapshot</span>
+        <h2 className="section-title" style={{ marginBottom: '0.75rem' }}>{doc.name}</h2>
+        <p>{doc.specialization}</p>
+
+        <div className="dashboard-metrics" style={{ marginTop: '1.5rem', gridTemplateColumns: '1fr' }}>
+          <div className="metric-card">
+            <strong>{doc.experience}</strong>
+            <span>Years Experience</span>
+          </div>
+          <div className="metric-card">
+            <strong>${doc.fee}</strong>
+            <span>Consultation Fee</span>
+          </div>
         </div>
-        
-        <h4>Available Slots</h4>
-        <div style={{display:'flex', gap:'1rem', marginTop:'1rem', flexWrap:'wrap'}}>
-          {doc.availableSlots?.map(slot => (
-            <span key={slot} style={{padding:'0.5rem 1rem', background:'var(--surface-dark)', borderRadius:'8px', border:'1px solid var(--primary-color)'}}>
-              {slot}
-            </span>
-          ))}
-        </div>
-        
-        <Link to="/book" state={{doc}} className="btn btn-primary" style={{marginTop:'2rem', display:'block', textAlign:'center', width:'100%'}}>
+
+        <Link to="/book" state={{ doc }} className="btn btn-primary" style={{ width: '100%', marginTop: '1.5rem' }}>
           Proceed to Booking
         </Link>
+      </aside>
+
+      <div className="detail-main">
+        <article className="profile-card luxury-card">
+          <div className="profile-header">
+            <div>
+              <span className="eyebrow">Doctor Profile</span>
+              <h1 className="section-title">{doc.name}</h1>
+            </div>
+            <span className="status-pill">{doc.specialization}</span>
+          </div>
+
+          <p className="section-copy">
+            Review doctor information, check available slots, and continue to booking.
+          </p>
+
+          <div className="profile-highlight">
+            <div className="panel">
+              <h3>Hospital</h3>
+              <p>{doc.hospital}</p>
+            </div>
+            <div className="panel">
+              <h3>Expertise</h3>
+              <p>{doc.specialization}</p>
+            </div>
+            <div className="panel">
+              <h3>Availability</h3>
+              <p>Same elegant booking flow across available slots.</p>
+            </div>
+          </div>
+
+          <h3 style={{ marginBottom: '1rem' }}>Available appointment windows</h3>
+          <div className="slots">
+            {doc.availableSlots?.map((slot) => (
+              <span key={slot} className="slot-chip">{slot}</span>
+            ))}
+          </div>
+        </article>
       </div>
-    </div>
+    </section>
   );
 }
