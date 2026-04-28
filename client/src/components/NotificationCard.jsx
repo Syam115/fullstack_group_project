@@ -1,12 +1,31 @@
 import formatDate from '../utils/formatDate';
 
-export default function NotificationCard({ notification, onRead }) {
+const typeToneMap = {
+  Booking: 'success',
+  Reminder: 'success',
+  'Status Update': '',
+  Reschedule: '',
+  Cancellation: 'error',
+  Prescription: 'success',
+  'Doctor Approval': '',
+  'Account Update': '',
+  'Hospital Update': '',
+  'System Summary': '',
+};
+
+export default function NotificationCard({ notification, onRead, roleLabel }) {
   const appointmentDate = notification.appointment_id?.date;
+  const tone = typeToneMap[notification.type] || '';
 
   return (
     <article className="appointment-card">
       <div className="panel-header" style={{ marginBottom: 0 }}>
-        <h3 style={{ marginBottom: 0 }}>{notification.type || 'Notification'}</h3>
+        <div>
+          <span className={`status-pill ${tone}`} style={{ marginBottom: '0.75rem' }}>
+            {notification.type || 'Notification'}
+          </span>
+          <h3 style={{ marginBottom: 0 }}>{roleLabel}</h3>
+        </div>
         <span className={`status-pill ${notification.status === 'Read' ? '' : 'success'}`}>
           {notification.status}
         </span>

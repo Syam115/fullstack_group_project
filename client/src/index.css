@@ -278,10 +278,28 @@ p {
   transition: background 180ms ease, color 180ms ease;
 }
 
+.nav-icon-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  color: var(--muted);
+  border-radius: 999px;
+  transition: background 180ms ease, color 180ms ease, transform 180ms ease;
+}
+
 .nav-link:hover,
-.nav-link.active {
+.nav-link.active,
+.nav-icon-link:hover,
+.nav-icon-link.active {
   color: var(--text);
   background: rgba(255, 255, 255, 0.055);
+}
+
+.bell-icon {
+  width: 1.2rem;
+  height: 1.2rem;
 }
 
 .hero {

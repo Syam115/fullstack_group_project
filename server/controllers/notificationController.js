@@ -1,5 +1,7 @@
 const Notification = require('../models/Notification');
 const Appointment = require('../models/Appointment');
+const Admin = require('../models/Admin');
+const Doctor = require('../models/Doctor');
 const sendAppointmentReminder = require('../utils/sendAppointmentReminder');
 
 function getUserModel(role) {
@@ -41,9 +43,45 @@ async function processUpcomingReminders() {
     return created;
 }
 
+async function syncAdminAlerts() {
+    const admins = await Admin.find({}).select('_id');
+    const pendingDoctors = await Doctor.find({ approvalStatus: 'Pending' }).select('_id name createdAt');
+
+    for (const admin of admins) {
+        for (const doctor of pendingDoctors) {
+            const exists = await Notification.findOne({
+                userId: admin._id,
+                userModel: 'Admin',
+                type: 'Doctor Approval',
+                'meta.doctorId': doctor._id,
+                status: 'Unread'
+            });
+
+            if (!exists) {
+                await Notification.create({
+                    userId: admin._id,
+                    userModel: 'Admin',
+                    message: `Doctor approval pending for ${doctor.name}`,
+                    sent_at: new Date(),
+                    status: 'Unread',
+                    type: 'Doctor Approval',
+                    channel: 'in-app',
+                    meta: {
+                        doctorId: doctor._id,
+                        doctorName: doctor.name
+                    }
+                });
+            }
+        }
+    }
+}
+
 exports.getNotifications = async (req, res) => {
     try {
         await processUpcomingReminders();
+        if (req.user.role === 'admin') {
+            await syncAdminAlerts();
+        }
 
         const notifications = await Notification.find({
             userId: req.user._id,
@@ -79,6 +117,18 @@ exports.markNotificationRead = async (req, res) => {
 exports.processReminders = async (req, res) => {
     try {
         const created = await processUpcomingReminders();
+        await Notification.create({
+            userId: req.user._id,
+            userModel: 'Admin',
+            message: `Reminder processing finished. ${created} reminder notification(s) generated.`,
+            sent_at: new Date(),
+            status: 'Unread',
+            type: 'System Summary',
+            channel: 'in-app',
+            meta: {
+                created
+            }
+        });
         res.json({ message: 'Reminder processing complete', created });
     } catch (error) {
         res.status(500).json({ message: error.message });

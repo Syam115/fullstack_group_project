@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const Doctor = require('../models/Doctor');
 const Admin = require('../models/Admin');
+const Notification = require('../models/Notification');
 const generateToken = require('../utils/generateToken');
 
 exports.register = async (req, res) => {
@@ -47,6 +48,24 @@ exports.registerDoctor = async (req, res) => {
             availableSlots: Array.isArray(availableSlots) ? availableSlots : [],
             approvalStatus: 'Pending'
         });
+
+        const admins = await Admin.find({}).select('_id');
+        if (admins.length > 0) {
+            await Notification.insertMany(admins.map((admin) => ({
+                userId: admin._id,
+                userModel: 'Admin',
+                message: `New doctor registration from ${doctor.name} is waiting for approval`,
+                sent_at: new Date(),
+                status: 'Unread',
+                type: 'Doctor Approval',
+                channel: 'in-app',
+                meta: {
+                    doctorId: doctor._id,
+                    doctorName: doctor.name,
+                    approvalStatus: 'Pending'
+                }
+            })));
+        }
 
         res.status(201).json({
             _id: doctor._id,

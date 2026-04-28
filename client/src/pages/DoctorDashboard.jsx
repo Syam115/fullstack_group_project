@@ -5,7 +5,8 @@ import formatDate from '../utils/formatDate';
 import generateTimeSlots from '../utils/generateTimeSlots';
 import { getDoctorAppointments, updateAppointmentStatus } from '../services/appointmentService';
 import { getDoctorById, updateDoctorAvailability } from '../services/doctorService';
-import { savePrescription } from '../services/prescriptionService';
+import { getMyPrescriptions, savePrescription } from '../services/prescriptionService';
+import PrescriptionCard from '../components/PrescriptionCard';
 
 export default function DoctorDashboard() {
   const { userInfo, userToken } = useSelector((state) => state.auth);
@@ -16,17 +17,24 @@ export default function DoctorDashboard() {
     '11:30 AM',
     '03:00 PM',
   ]);
+  const [prescriptions, setPrescriptions] = useState({});
   const [prescriptionForms, setPrescriptionForms] = useState({});
+  const [openRecordEditor, setOpenRecordEditor] = useState({});
   const slotOptions = generateTimeSlots(9, 17);
 
   const fetchAppointments = async () => {
     try {
-      const [{ data }, doctorProfile] = await Promise.all([
+      const [{ data }, doctorProfile, prescriptionsResponse] = await Promise.all([
         getDoctorAppointments(userToken),
         getDoctorById(userInfo?._id),
+        getMyPrescriptions(userToken),
       ]);
       setAppointments(data);
       setAvailableSlots(doctorProfile.data.availableSlots || []);
+      const prescriptionMap = Object.fromEntries(
+        prescriptionsResponse.data.map((item) => [item.appointmentId?._id || item.appointmentId, item]),
+      );
+      setPrescriptions(prescriptionMap);
     } catch (error) {
       console.error(error);
     } finally {
@@ -40,11 +48,16 @@ export default function DoctorDashboard() {
     Promise.all([
       getDoctorAppointments(userToken),
       getDoctorById(userInfo?._id),
+      getMyPrescriptions(userToken),
     ])
-      .then(([appointmentsResponse, doctorResponse]) => {
+      .then(([appointmentsResponse, doctorResponse, prescriptionsResponse]) => {
         if (!ignore) {
           setAppointments(appointmentsResponse.data);
           setAvailableSlots(doctorResponse.data.availableSlots || []);
+          const prescriptionMap = Object.fromEntries(
+            prescriptionsResponse.data.map((item) => [item.appointmentId?._id || item.appointmentId, item]),
+          );
+          setPrescriptions(prescriptionMap);
         }
       })
       .catch(console.error)
@@ -87,18 +100,41 @@ export default function DoctorDashboard() {
   const submitPrescription = async (appointmentId) => {
     try {
       const form = prescriptionForms[appointmentId];
+      if (!form?.doctorNotes || !form?.prescription) {
+        alert('Please enter doctor notes and prescription details before saving.');
+        return;
+      }
+
       const payload = new FormData();
       payload.append('appointmentId', appointmentId);
       payload.append('doctorNotes', form?.doctorNotes || '');
       payload.append('prescription', form?.prescription || '');
       payload.append('followUpDate', form?.followUpDate || '');
 
-      await savePrescription(payload, userToken);
+      const { data } = await savePrescription(payload, userToken);
+      setPrescriptions((current) => ({ ...current, [appointmentId]: data }));
+      setOpenRecordEditor((current) => ({ ...current, [appointmentId]: false }));
       await fetchAppointments();
       alert('Consultation record saved');
     } catch (error) {
       alert(error.response?.data?.message || error.message);
     }
+  };
+
+  const openEditor = (appointmentId) => {
+    const existing = prescriptions[appointmentId];
+    if (existing) {
+      setPrescriptionForms((current) => ({
+        ...current,
+        [appointmentId]: {
+          doctorNotes: existing.doctorNotes || '',
+          prescription: existing.prescription || '',
+          followUpDate: existing.followUpDate || '',
+        },
+      }));
+    }
+
+    setOpenRecordEditor((current) => ({ ...current, [appointmentId]: true }));
   };
 
   const pendingCount = appointments.filter((appt) => appt.status === 'Pending').length;
@@ -183,13 +219,20 @@ export default function DoctorDashboard() {
                       <button type="button" className="btn btn-secondary" onClick={() => updateStatus(appt._id, 'Cancelled')}>
                         Cancel
                       </button>
-                      <button type="button" className="btn btn-secondary" onClick={() => updateStatus(appt._id, 'Completed')}>
-                        Mark Completed
-                      </button>
                     </div>
                   ) : null}
 
-                  {(appt.status === 'Confirmed' || appt.status === 'Completed') ? (
+                  {appt.status === 'Confirmed' ? (
+                    <div className="stack-sm">
+                      {!openRecordEditor[appt._id] ? (
+                        <button type="button" className="btn btn-secondary" onClick={() => openEditor(appt._id)}>
+                          Add Consultation Record
+                        </button>
+                      ) : null}
+                    </div>
+                  ) : null}
+
+                  {(appt.status === 'Confirmed' && openRecordEditor[appt._id]) ? (
                     <div className="stack-sm">
                       <textarea
                         className="form-input"
@@ -223,6 +266,77 @@ export default function DoctorDashboard() {
                       <button type="button" className="btn btn-secondary" onClick={() => submitPrescription(appt._id)}>
                         Save Consultation Record
                       </button>
+                      <button
+                        type="button"
+                        className="btn btn-ghost"
+                        onClick={() => setOpenRecordEditor((current) => ({ ...current, [appt._id]: false }))}
+                      >
+                        Close
+                      </button>
+                    </div>
+                  ) : null}
+
+                  {appt.status === 'Completed' ? (
+                    <div className="stack-sm">
+                      <div className="form-note">Consultation completed. The saved record is shown below.</div>
+                      {prescriptions[appt._id] ? (
+                        <>
+                          <PrescriptionCard prescription={prescriptions[appt._id]} />
+                          {!openRecordEditor[appt._id] ? (
+                            <button type="button" className="btn btn-secondary" onClick={() => openEditor(appt._id)}>
+                              Edit Record
+                            </button>
+                          ) : null}
+                        </>
+                      ) : (
+                        <div className="form-note">No consultation record was found for this completed appointment.</div>
+                      )}
+                    </div>
+                  ) : null}
+
+                  {(appt.status === 'Completed' && openRecordEditor[appt._id]) ? (
+                    <div className="stack-sm">
+                      <textarea
+                        className="form-input"
+                        rows="3"
+                        placeholder="Doctor notes"
+                        value={prescriptionForms[appt._id]?.doctorNotes || ''}
+                        onChange={(e) => setPrescriptionForms((current) => ({
+                          ...current,
+                          [appt._id]: { ...current[appt._id], doctorNotes: e.target.value },
+                        }))}
+                      />
+                      <textarea
+                        className="form-input"
+                        rows="3"
+                        placeholder="Prescription details"
+                        value={prescriptionForms[appt._id]?.prescription || ''}
+                        onChange={(e) => setPrescriptionForms((current) => ({
+                          ...current,
+                          [appt._id]: { ...current[appt._id], prescription: e.target.value },
+                        }))}
+                      />
+                      <input
+                        type="date"
+                        className="form-input"
+                        value={prescriptionForms[appt._id]?.followUpDate || ''}
+                        onChange={(e) => setPrescriptionForms((current) => ({
+                          ...current,
+                          [appt._id]: { ...current[appt._id], followUpDate: e.target.value },
+                        }))}
+                      />
+                      <div className="button-row">
+                        <button type="button" className="btn btn-secondary" onClick={() => submitPrescription(appt._id)}>
+                          Update Consultation Record
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-ghost"
+                          onClick={() => setOpenRecordEditor((current) => ({ ...current, [appt._id]: false }))}
+                        >
+                          Close
+                        </button>
+                      </div>
                     </div>
                   ) : null}
                 </AppointmentCard>
