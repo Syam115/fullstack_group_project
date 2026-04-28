@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import formatLabel from '../utils/formatLabel';
 
 function getInitials(name = '') {
   return name
@@ -14,7 +15,7 @@ export default function DoctorCard({ doc }) {
     <article className="doctor-card glass">
       <div className="doctor-card-top">
         <div className="doctor-monogram">{getInitials(doc.name)}</div>
-        <span className="doctor-tag">{doc.specialization}</span>
+        <span className="doctor-tag">{formatLabel(doc.specialization)}</span>
       </div>
 
       <div>

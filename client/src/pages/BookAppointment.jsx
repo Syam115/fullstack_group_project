@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import axios from 'axios';
-
-const API_URL = import.meta.env.VITE_API_BASE_URL || '/api';
+import { bookAppointment } from '../services/appointmentService';
+import formatLabel from '../utils/formatLabel';
 
 export default function BookAppointment() {
   const location = useLocation();
@@ -31,10 +30,9 @@ export default function BookAppointment() {
     setLoading(true);
 
     try {
-      await axios.post(
-        `${API_URL}/appointments`,
+      await bookAppointment(
         { doctorId: doc._id, date, start_time: slot, end_time: 'To be determined', reason },
-        { headers: { Authorization: `Bearer ${userToken}` } },
+        userToken,
       );
 
       alert('Appointment request sent successfully.');
@@ -57,7 +55,7 @@ export default function BookAppointment() {
         <div className="profile-highlight" style={{ marginTop: '1.5rem' }}>
           <div className="panel">
             <h3>Speciality</h3>
-            <p>{doc.specialization}</p>
+            <p>{formatLabel(doc.specialization)}</p>
           </div>
           <div className="panel">
             <h3>Hospital</h3>

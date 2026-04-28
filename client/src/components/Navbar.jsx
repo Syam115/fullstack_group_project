@@ -19,6 +19,12 @@ export default function Navbar() {
           <NavLink to="/doctors" className="nav-link">Find Doctors</NavLink>
           {userInfo ? (
             <>
+              {userInfo.role === 'patient' ? (
+                <NavLink to="/appointments/history" className="nav-link">
+                  History
+                </NavLink>
+              ) : null}
+              <NavLink to="/notifications" className="nav-link">Notifications</NavLink>
               <NavLink to={`/dashboard/${userInfo.role}`} className="nav-link">
                 Dashboard
               </NavLink>

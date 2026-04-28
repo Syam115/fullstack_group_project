@@ -1,14 +1,42 @@
 import { useEffect, useState } from 'react';
-import axios from 'axios';
 import DoctorCard from '../components/DoctorCard';
-
-const API_URL = import.meta.env.VITE_API_BASE_URL || '/api';
+import { getDoctors } from '../services/doctorService';
 
 export default function DoctorList() {
   const [doctors, setDoctors] = useState([]);
+  const [filters, setFilters] = useState({
+    specialization: '',
+    hospital: '',
+    location: '',
+    availability: false,
+  });
+
+  const loadDoctors = async () => {
+    try {
+      const { data } = await getDoctors({
+        ...filters,
+        availability: filters.availability ? 'true' : '',
+      });
+      setDoctors(data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   useEffect(() => {
-    axios.get(`${API_URL}/doctors`).then((res) => setDoctors(res.data)).catch(console.error);
+    let ignore = false;
+
+    getDoctors({})
+      .then(({ data }) => {
+        if (!ignore) {
+          setDoctors(data);
+        }
+      })
+      .catch(console.error);
+
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   return (
@@ -21,6 +49,52 @@ export default function DoctorList() {
         <p className="section-copy">
           Select a doctor to view the profile and book an available slot.
         </p>
+      </div>
+
+      <div className="panel luxury-card filter-bar">
+        <div className="filter-grid">
+          <input
+            className="form-input"
+            placeholder="Search specialization"
+            value={filters.specialization}
+            onChange={(e) => setFilters((current) => ({ ...current, specialization: e.target.value }))}
+          />
+          <input
+            className="form-input"
+            placeholder="Search hospital"
+            value={filters.hospital}
+            onChange={(e) => setFilters((current) => ({ ...current, hospital: e.target.value }))}
+          />
+          <input
+            className="form-input"
+            placeholder="Search location"
+            value={filters.location}
+            onChange={(e) => setFilters((current) => ({ ...current, location: e.target.value }))}
+          />
+          <label className="checkbox-row">
+            <input
+              type="checkbox"
+              checked={filters.availability}
+              onChange={(e) => setFilters((current) => ({ ...current, availability: e.target.checked }))}
+            />
+            Show only doctors with available slots
+          </label>
+        </div>
+        <div className="button-row">
+          <button type="button" className="btn btn-primary" onClick={loadDoctors}>Apply Filters</button>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={async () => {
+              const nextFilters = { specialization: '', hospital: '', location: '', availability: false };
+              setFilters(nextFilters);
+              const { data } = await getDoctors(nextFilters);
+              setDoctors(data);
+            }}
+          >
+            Reset
+          </button>
+        </div>
       </div>
 
       {doctors.length === 0 ? (

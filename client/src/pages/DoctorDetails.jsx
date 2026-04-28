@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import axios from 'axios';
-
-const API_URL = import.meta.env.VITE_API_BASE_URL || '/api';
+import { getDoctorById } from '../services/doctorService';
+import formatLabel from '../utils/formatLabel';
 
 export default function DoctorDetails() {
   const { id } = useParams();
@@ -11,7 +10,7 @@ export default function DoctorDetails() {
   const [doc, setDoc] = useState(null);
 
   useEffect(() => {
-    axios.get(`${API_URL}/doctors/${id}`).then((res) => setDoc(res.data)).catch(console.error);
+    getDoctorById(id).then((res) => setDoc(res.data)).catch(console.error);
   }, [id]);
 
   if (!doc) {
@@ -23,7 +22,7 @@ export default function DoctorDetails() {
       <aside className="detail-sidebar glass">
         <span className="eyebrow">Clinical Snapshot</span>
         <h2 className="section-title" style={{ marginBottom: '0.75rem' }}>{doc.name}</h2>
-        <p>{doc.specialization}</p>
+        <p>{formatLabel(doc.specialization)}</p>
 
         <div className="dashboard-metrics" style={{ marginTop: '1.5rem', gridTemplateColumns: '1fr' }}>
           <div className="metric-card">
@@ -53,7 +52,7 @@ export default function DoctorDetails() {
               <span className="eyebrow">Doctor Profile</span>
               <h1 className="section-title">{doc.name}</h1>
             </div>
-            <span className="status-pill">{doc.specialization}</span>
+            <span className="status-pill">{formatLabel(doc.specialization)}</span>
           </div>
 
           <p className="section-copy">
@@ -67,11 +66,15 @@ export default function DoctorDetails() {
             </div>
             <div className="panel">
               <h3>Expertise</h3>
-              <p>{doc.specialization}</p>
+              <p>{formatLabel(doc.specialization)}</p>
             </div>
             <div className="panel">
               <h3>Availability</h3>
-              <p>Same elegant booking flow across available slots.</p>
+              <p>{doc.availableSlots?.length || 0} slot options currently open.</p>
+            </div>
+            <div className="panel">
+              <h3>Location</h3>
+              <p>{doc.location || 'Location not added yet'}</p>
             </div>
           </div>
 

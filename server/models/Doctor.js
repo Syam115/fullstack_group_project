@@ -7,10 +7,16 @@ const doctorSchema = new mongoose.Schema({
     specialization: { type: String, required: true },
     experience: { type: Number, default: 0 },
     hospital: { type: String, required: true },
+    location: { type: String, default: '' },
     fee: { type: Number, default: 0 },
     availableSlots: { type: [String], default: [] },
     email: { type: String, required: true, unique: true },
-    password: { type: String, required: true }
+    password: { type: String, required: true },
+    approvalStatus: {
+        type: String,
+        enum: ['Pending', 'Approved', 'Rejected'],
+        default: 'Pending'
+    }
 }, { timestamps: true });
 
 doctorSchema.pre('save', async function () {

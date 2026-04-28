@@ -1,9 +1,19 @@
 const Doctor = require('../models/Doctor');
+
 exports.getDoctors = async (req, res) => {
     try {
-        const { specialization } = req.query;
-        let query = {};
+        const { specialization, hospital, location, availability, approvalStatus } = req.query;
+        const query = {};
+
         if (specialization) query.specialization = { $regex: specialization, $options: 'i' };
+        if (hospital) query.hospital = { $regex: hospital, $options: 'i' };
+        if (location) query.location = { $regex: location, $options: 'i' };
+        query.approvalStatus = approvalStatus || 'Approved';
+
+        if (availability === 'true') {
+            query.availableSlots = { $exists: true, $ne: [] };
+        }
+
         const doctors = await Doctor.find(query).select('-password -__v');
         res.json(doctors);
     } catch (err) { res.status(500).json({ message: err.message }); }

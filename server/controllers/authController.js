@@ -18,6 +18,49 @@ exports.register = async (req, res) => {
     } catch (error) { res.status(500).json({ message: error.message }); }
 };
 
+exports.registerDoctor = async (req, res) => {
+    const {
+        name,
+        email,
+        password,
+        specialization,
+        experience,
+        hospital,
+        location,
+        fee,
+        availableSlots
+    } = req.body;
+
+    try {
+        const doctorExists = await Doctor.findOne({ email });
+        if (doctorExists) return res.status(400).json({ message: 'Doctor already exists' });
+
+        const doctor = await Doctor.create({
+            name,
+            email,
+            password,
+            specialization,
+            experience,
+            hospital,
+            location,
+            fee,
+            availableSlots: Array.isArray(availableSlots) ? availableSlots : [],
+            approvalStatus: 'Pending'
+        });
+
+        res.status(201).json({
+            _id: doctor._id,
+            name: doctor.name,
+            email: doctor.email,
+            role: 'doctor',
+            approvalStatus: doctor.approvalStatus,
+            message: 'Doctor registration submitted for admin approval'
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 exports.login = async (req, res) => {
     const { email, password, role } = req.body;
     try {
@@ -28,6 +71,10 @@ exports.login = async (req, res) => {
         else return res.status(400).json({ message: 'Invalid role' });
 
         if (!user) return res.status(401).json({ message: 'Invalid email or password' });
+
+        if (role === 'doctor' && user.approvalStatus !== 'Approved') {
+            return res.status(403).json({ message: `Doctor account is ${user.approvalStatus.toLowerCase()}. Await admin approval.` });
+        }
 
         const isMatch = await user.matchPassword(password);
 

@@ -6,14 +6,15 @@ import { login } from '../redux/authSlice';
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState('patient');
+  const location = useLocation();
+  const [role, setRole] = useState(() => location.state?.suggestedRole || 'patient');
 
   const dispatch = useDispatch();
-  const location = useLocation();
   const navigate = useNavigate();
   const { userInfo, loading, error } = useSelector((state) => state.auth);
   const redirectTo = location.state?.redirectTo;
   const redirectState = location.state?.redirectState;
+  const portalMessage = location.state?.portalMessage;
 
   useEffect(() => {
     if (userInfo) {
@@ -38,6 +39,7 @@ export default function Login() {
           Enter your email, password, and role to continue.
         </p>
 
+        {portalMessage ? <div className="form-note" style={{ marginBottom: '1rem' }}>{portalMessage}</div> : null}
         {error ? <div className="form-error" style={{ marginBottom: '1rem' }}>{error}</div> : null}
 
         <form onSubmit={handleSubmit}>
@@ -73,6 +75,12 @@ export default function Login() {
               <option value="admin">Admin</option>
             </select>
           </div>
+
+          {role === 'doctor' ? (
+            <div className="form-note" style={{ marginBottom: '1rem' }}>
+              Newly registered doctors can sign in only after admin approval.
+            </div>
+          ) : null}
 
           <button type="submit" disabled={loading} className="btn btn-primary" style={{ width: '100%', marginTop: '0.75rem' }}>
             {loading ? 'Signing In...' : 'Enter Platform'}

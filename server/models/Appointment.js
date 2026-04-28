@@ -10,9 +10,20 @@ const apptSchema = new mongoose.Schema({
     reason: { type: String, required: true },
     status: {
         type: String,
-        enum: ['Pending', 'Confirmed', 'Cancelled'],
+        enum: ['Pending', 'Confirmed', 'Cancelled', 'Completed'],
         default: 'Pending'
-    }
+    },
+    rescheduledCount: { type: Number, default: 0 },
+    previousSchedules: {
+        type: [{
+            date: String,
+            start_time: String,
+            end_time: String,
+            changedAt: Date
+        }],
+        default: []
+    },
+    completedAt: { type: Date, default: null }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Appointment', apptSchema);

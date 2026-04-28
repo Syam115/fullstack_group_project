@@ -1,27 +1,61 @@
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
-import axios from 'axios';
-
-const API_URL = import.meta.env.VITE_API_BASE_URL || '/api';
-
-function formatDate(date) {
-  if (!date) return 'TBD';
-  return new Date(date).toLocaleDateString('en-IN', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
-}
+import { Link } from 'react-router-dom';
+import AppointmentCard from '../components/AppointmentCard';
+import {
+  cancelAppointment,
+  getPatientHistory,
+  rescheduleAppointment,
+} from '../services/appointmentService';
 
 export default function PatientDashboard() {
   const { userInfo, userToken } = useSelector((state) => state.auth);
   const [appts, setAppts] = useState([]);
+  const [reschedule, setReschedule] = useState({});
+
+  const loadAppointments = async () => {
+    try {
+      const { data } = await getPatientHistory(userToken);
+      setAppts(data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   useEffect(() => {
-    axios.get(`${API_URL}/appointments/history`, {
-      headers: { Authorization: `Bearer ${userToken}` },
-    }).then((res) => setAppts(res.data)).catch(console.error);
+    let ignore = false;
+
+    getPatientHistory(userToken)
+      .then(({ data }) => {
+        if (!ignore) {
+          setAppts(data);
+        }
+      })
+      .catch(console.error);
+
+    return () => {
+      ignore = true;
+    };
   }, [userToken]);
+
+  const handleCancel = async (id) => {
+    try {
+      await cancelAppointment(id, userToken);
+      await loadAppointments();
+    } catch (error) {
+      alert(error.response?.data?.message || error.message);
+    }
+  };
+
+  const handleReschedule = async (id) => {
+    try {
+      await rescheduleAppointment(id, reschedule[id], userToken);
+      setReschedule((current) => ({ ...current, [id]: undefined }));
+      await loadAppointments();
+    } catch (error) {
+      alert(error.response?.data?.message || error.message);
+    }
+  };
 
   return (
     <section className="dashboard-layout animate-fade-in">
@@ -40,6 +74,11 @@ export default function PatientDashboard() {
         <div className="metric-card">
           <strong>{userInfo?.role || 'patient'}</strong>
           <span>Active Portal</span>
+        </div>
+
+        <div className="button-row">
+          <Link to="/appointments/history" className="btn btn-secondary">Full History</Link>
+          <Link to="/notifications" className="btn btn-secondary">Notifications</Link>
         </div>
       </aside>
 
@@ -76,21 +115,52 @@ export default function PatientDashboard() {
           ) : (
             <div className="appointment-list">
               {appts.map((appt) => (
-                <article key={appt._id} className="appointment-card">
-                  <div className="panel-header" style={{ marginBottom: 0 }}>
-                    <h3 style={{ marginBottom: 0 }}>{appt.doctorId?.name || formatDate(appt.date)}</h3>
-                    <span className={`status-pill ${appt.status === 'Confirmed' ? 'success' : appt.status === 'Cancelled' ? 'error' : ''}`}>
-                      {appt.status}
-                    </span>
-                  </div>
+                <AppointmentCard key={appt._id} appointment={appt}>
                   <div className="appointment-meta">
-                    <span>Date: {formatDate(appt.date)}</span>
-                    <span>Time: {appt.start_time}</span>
-                    <span>Doctor: {appt.doctorId?.specialization || 'N/A'}</span>
                     <span>Appointment ID: {appt._id.slice(-6).toUpperCase()}</span>
+                    <span>Hospital: {appt.doctorId?.hospital || 'N/A'}</span>
                   </div>
-                  <p>Reason: {appt.reason}</p>
-                </article>
+                  {appt.status !== 'Cancelled' && appt.status !== 'Completed' ? (
+                    <div className="stack-sm">
+                      <div className="inline-form-grid">
+                        <input
+                          type="date"
+                          className="form-input"
+                          value={reschedule[appt._id]?.date || ''}
+                          onChange={(e) => setReschedule((current) => ({
+                            ...current,
+                            [appt._id]: { ...current[appt._id], date: e.target.value },
+                          }))}
+                        />
+                        <select
+                          className="form-input"
+                          value={reschedule[appt._id]?.start_time || ''}
+                          onChange={(e) => setReschedule((current) => ({
+                            ...current,
+                            [appt._id]: {
+                              ...current[appt._id],
+                              start_time: e.target.value,
+                              end_time: 'To be determined',
+                            },
+                          }))}
+                        >
+                          <option value="">Select slot</option>
+                          {(appt.doctorId?.availableSlots || []).map((slot) => (
+                            <option key={slot} value={slot}>{slot}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="button-row">
+                        <button type="button" className="btn btn-secondary" onClick={() => handleReschedule(appt._id)}>
+                          Reschedule
+                        </button>
+                        <button type="button" className="btn btn-secondary" onClick={() => handleCancel(appt._id)}>
+                          Cancel Appointment
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
+                </AppointmentCard>
               ))}
             </div>
           )}
