@@ -11,3 +11,7 @@ export function authHeaders(token) {
 }
 
 export default API_URL;
+// This file sets up an Axios instance for making API requests to the backend. 
+// It uses a base URL defined in environment variables, allowing for easy configuration across 
+// different environments (development, staging, production). The `authHeaders` function generates 
+// the necessary headers for authenticated requests when a token is provided.

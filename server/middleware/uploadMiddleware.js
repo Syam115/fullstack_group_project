@@ -14,3 +14,5 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 module.exports = upload;
+//this middleware handles file uploads for doctor profiles
+// images and prescription files.

@@ -1,3 +1,4 @@
+//Booking → Rescheduling → Cancelling → Status Updates → History
 const Appointment = require('../models/Appointment');
 const Notification = require('../models/Notification');
 const Doctor = require('../models/Doctor');

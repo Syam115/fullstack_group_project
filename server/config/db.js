@@ -9,3 +9,8 @@ module.exports = async () => {
         process.exit(1);
     }
 };
+//connects to the MongoDB database using Mongoose. 
+// It uses the connection string from the environment variable
+//  MONGO_URI, or defaults to a local MongoDB instance if not provided.
+//  If the connection is successful, it logs a success message; otherwise, 
+// it logs the error and exits the process.

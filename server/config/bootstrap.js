@@ -140,3 +140,6 @@ module.exports = async function bootstrap() {
     const collections = await mongoose.connection.db.listCollections().toArray();
     console.log(`Bootstrap ready: ${collections.length} collections available`);
 };
+// This file ensures that all necessary collections are created and 
+// seeded with default data if they don't already exist. 
+// It is called during server startup to prepare the database for use.

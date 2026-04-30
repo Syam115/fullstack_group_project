@@ -23,3 +23,10 @@ router.put('/hospitals/:id', protect, authorize(Role.ADMIN), updateHospital);
 router.delete('/hospitals/:id', protect, authorize(Role.ADMIN), deleteHospital);
 
 module.exports = router;
+//This file defines the admin-related API routes, including:
+// dashboard stats
+// doctor approval
+// patient listing
+// hospital CRUD operations
+// Each route is protected by authentication and role-based 
+// authorization middleware to ensure that only admins can access these endpoints.

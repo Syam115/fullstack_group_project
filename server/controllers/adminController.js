@@ -177,3 +177,9 @@ exports.deleteHospital = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+//This file handles all admin-related backend operations like:
+// dashboard stats
+// doctor approval
+// patient listing
+// hospital CRUD
+// notifications

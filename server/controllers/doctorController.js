@@ -32,3 +32,9 @@ exports.updateAvailability = async (req, res) => {
         res.json(doctor);
     } catch (err) { res.status(500).json({ message: err.message }); }
 };
+//This file:
+
+// fetches doctors (with filters)
+// returns single doctor details
+// lets doctors update their availability based on appointments and
+//  personal schedule and improving searchability for patients.

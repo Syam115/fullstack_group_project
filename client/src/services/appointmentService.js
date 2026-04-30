@@ -35,3 +35,8 @@ export function updateAppointmentStatus(id, payload, token) {
     headers: authHeaders(token),
   });
 }
+// This service file defines functions for interacting with the appointment-related endpoints of the backend API.
+// Each function corresponds to a specific action, such as booking an appointment, fetching patient history, 
+// rescheduling, canceling, or updating the status of an appointment. The functions use the Axios instance 
+// defined in `api.js` and include authentication headers when a token is provided. This abstraction allows 
+// the rest of the application to easily perform these operations without worrying about the underlying API details.

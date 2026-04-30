@@ -20,3 +20,16 @@ adminSchema.methods.matchPassword = async function (enteredPassword) {
 };
 
 module.exports = mongoose.model('Admin', adminSchema);
+//Admin registers
+//    ↓
+// Password hashed (pre-save hook)
+//    ↓
+// Stored securely in DB
+
+// Admin logs in
+//    ↓
+// matchPassword()
+//    ↓
+// bcrypt compares hash
+//    ↓
+// Login success/failure

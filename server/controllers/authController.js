@@ -104,3 +104,8 @@ exports.login = async (req, res) => {
         }
     } catch (error) { res.status(500).json({ message: error.message }); }
 };
+//This file handles user authentication for patients, doctors, and admins.
+// It provides endpoints for registration and login, including doctor 
+// registration which requires admin approval. 
+// It also generates JWT tokens for authenticated sessions and sends 
+// notifications to admins when a new doctor registers.
